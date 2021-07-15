@@ -5,7 +5,7 @@ const Gtk = imports.gi.Gtk;
 const Lang = imports.lang;
 
 const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+const Self = ExtensionUtils.getCurrentExtension();
 
 function init() {}
 
