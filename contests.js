@@ -162,7 +162,7 @@ var Contests = class {
         secondsTillNextContest() {
                 if (this.nextContest) {
                         let timeDiff = this.secondsTillContest(this.nextContest);
-                        if (timeDiff > 0)
+                        if (timeDiff >= 0)
                                 return timeDiff;
                         else {
                                 this.setNextContest();

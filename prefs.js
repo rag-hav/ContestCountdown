@@ -33,11 +33,11 @@ function buildPrefsWidget() {
 
         let title = new Gtk.Label({
                 label: '<b>' + Self.metadata.name + ' Extension Preferences</b>',
-                halign: Gtk.Align.START,
+                halign: Gtk.Align.CENTER,
                 use_markup: true,
                 visible: true
         });
-        prefsWidget.attach(title, 0, index, 1, 1);
+        prefsWidget.attach(title, 0, index, 2, 1);
 
         /* left-padding */
         let leftPaddingLabel = new Gtk.Label({
@@ -121,9 +121,9 @@ function buildPrefsWidget() {
         prefsWidget.attach(extensionIndexLabel, 0, index, 1, 1);
         prefsWidget.attach(extensionIndexEntry, 1, index, 1, 1);
 
-        /* toggle-window */
+        /* show-seconds */
         let showSecondsLabel = new Gtk.Label({
-                label: 'Click to show seconds in countdown',
+                label: 'Show seconds',
                 halign: Gtk.Align.START,
                 visible: true
         });
@@ -139,10 +139,40 @@ function buildPrefsWidget() {
         prefsWidget.attach(showSecondsSwitch, 1, index, 1, 1);
 
 
+
+        /* notification-time */
+        let notifyBeforeLabel = new Gtk.Label({
+                label: 'Notify before (seconds)',
+                halign: Gtk.Align.START,
+                visible: true
+        });
+        let notifyBeforeEntry = new Gtk.SpinButton({
+                adjustment: new Gtk.Adjustment({
+                        lower: -1,
+                        upper: 10000,
+                        step_increment: 1
+                }),
+                visible: true
+        });
+        let notifyBeforeInfoLabel = new Gtk.Label({
+                label: '-1 to turn off notification',
+                halign: Gtk.Align.END,
+                visible: true
+        });
+
+
+        index++;
+        prefsWidget.attach(notifyBeforeLabel, 0, index, 1, 1);
+        prefsWidget.attach(notifyBeforeEntry, 1, index, 1, 1);
+        index++;
+        prefsWidget.attach(notifyBeforeInfoLabel, 0, index, 2, 1);
+
+
         //settings.bind('command', commandEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
         settings.bind('left-padding', leftPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
         settings.bind('right-padding', rightPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
         settings.bind('show-seconds', showSecondsSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('notify-before', notifyBeforeEntry, 'active', Gio.SettingsBindFlags.DEFAULT);
         extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
                 settings.set_string('extension-place', options[widget.get_active()]);
         }));

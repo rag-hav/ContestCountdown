@@ -132,6 +132,8 @@ const ContestCountdown = new Lang.Class({
                         return "No Upcoming Contest!";
                 else if (timeDiff == -Infinity)
                         return "Failed to Load Data!";
+                else if (timeDiff == this.settings.get_int("notify-before"))
+                        Main.notify('Contest Countdown', this.contests.nextContest.name);
 
                 // Calculate rest of the time 
                 let ss = timeDiff % 60;

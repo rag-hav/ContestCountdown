@@ -16,5 +16,8 @@
                 <key name="show-seconds" type="b">
                         <default>true</default>
                 </key>
+                <key name="notify-before" type="i">
+                        <default>60</default>
+                </key>
         </schema>
 </schemalist>
