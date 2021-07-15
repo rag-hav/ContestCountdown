@@ -1,0 +1,6 @@
+{
+        "name": "Contest Countdown",
+        "description": "Countdown to next codeforces contest",
+        "uuid": "contestcountdown@raghav",
+        "shell-version": ["3.36.4"]
+}
