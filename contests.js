@@ -38,10 +38,10 @@ var Contests = class {
                 try {
                         let originalData = GLib.file_get_contents(this.cacheFile);
                         if (originalData[0])
-                                this.allContests = JSON.parse(originalData[1]);
+                                this.updateContests(JSON.parse(originalData[1]));
                         this.setNextContest();
                 } catch (e) {
-                        global.log("ContestCountdown: cant open cache " + e)
+                        global.log("ContestCountdown: No cache File / Cant open cache")
                 }
         }
 
@@ -109,40 +109,28 @@ var Contests = class {
 
         updateContests(newContests) {
 
-                newContests = newContests.filter((contest) => contest.startTimeSeconds && contest.phase == "BEFORE");
+                newContests = this._filterContest(newContests);
 
-                newContests.sort((contest) => contest.startTimeSeconds);
-
-                let n = 0;
-                let o = 0;
-                let updatedContests = [];
-
-                while (n < newContests.length && o < this.allContests.length) {
-                        if (newContests[n].id === this.allContests[o].id) {
-                                updatedContests.push(this.allContests[o]);
-                                n++, o++;
-                        } else {
-                                newContests[n].participating = true;
-                                updatedContests.push(newContests[n]);
-                                n++;
+                newContests.forEach((contest) => {
+                        if (!this.allContests.some((existingContest) => existingContest.id == contest
+                                        .id)) {
+                                contest.participating = true
+                                this.allContests.push(contest);
                         }
-                }
+                });
 
-                while (n < newContests.length) {
-                        newContests[n].participating = true;
-                        updatedContests.push(newContests[n]);
-                        n++;
-                }
-
-                while (o < this.allContests.length) {
-                        updatedContests.push(this.allContests[o]);
-                        o++;
-                }
-                this.allContests = updatedContests;
-
+                this.allContests = this._filterContest(this.allContests);
 
                 this.setNextContest();
                 this.saveToFile();
+        }
+
+        _filterContest(contests) {
+                contests = contests.filter((contest) => contest.startTimeSeconds && contest.phase == "BEFORE");
+                contests.sort((a, b) => {
+                        parseInt(a.startTimeSeconds) < parseInt(b.startTimeSeconds)
+                });
+                return contests;
         }
 
         secondsTillContest(contest) {
@@ -151,7 +139,7 @@ var Contests = class {
 
         setNextContest() {
                 this.nextContest = null;
-                this.allContests = this.allContests.filter((contest) => this.secondsTillContest(contest) > 0);
+                this.allContests = this._filterContest(this.allContests);
                 for (let contest of this.allContests)
                         if (contest.participating) {
                                 this.nextContest = contest;

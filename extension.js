@@ -14,9 +14,10 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Self = ExtensionUtils.getCurrentExtension();
 
 const Contests = Self.imports.contests;
+const PopMenuMaker = Self.imports.popupmenu.PopMenuMaker;
 
 //"User-defined" constants. If you've stumbled upon this extension, these values are the most likely you'd like to change.
-let LEFT_PADDING,
+var LEFT_PADDING,
         RIGHT_PADDING,
         EXTENSION_PLACE,
         EXTENSION_INDEX,
@@ -74,6 +75,8 @@ const ContestCountdown = new Lang.Class({
                 //Place the actor/label at the "end" (rightmost) position within the left box
                 let children = Main.panel._leftBox.get_children();
                 Main.panel._leftBox.insert_child_at_index(this.actor, children.length);
+
+                PopMenuMaker(this);
 
                 this._refreshTimer();
 
@@ -142,9 +145,9 @@ const ContestCountdown = new Lang.Class({
                 let dd = Math.floor(timeDiff / (24 * 3600));
 
                 if (this.settings.get_boolean("show-seconds"))
-                        return `${dd}d ${hh}h ${mm}m ${ss}s`;
+                        return `${dd}d  ${hh}h  ${mm}m  ${ss}s`;
                 else
-                        return `${dd}d ${hh}h ${mm}m`;
+                        return `${dd}d  ${hh}h  ${mm}m`;
 
         },
 

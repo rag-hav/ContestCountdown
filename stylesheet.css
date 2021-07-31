@@ -1,1 +1,16 @@
 
+.cc-contest-heading{
+        font-size: 130%;
+        padding-bottom: 0.5em;
+        font-weight: bold;
+}
+.cc-inline{
+        padding-bottom: 0.3em;
+        margin-left: 25px;
+}
+
+.cc-contest-name{
+        font-size: 110%;
+        padding-bottom: 0.4em;
+        margin-left: 15px;
+}
