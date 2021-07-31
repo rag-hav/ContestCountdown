@@ -48,6 +48,9 @@ var AllContestHeading =
                                 style_class: "cc-contest-heading",
                         });
                         this.actor.add_child(this._headingLabel);
+                        this.actor.connect('button-press-event', function() {
+                                Util.spawn(['xdg-open', "https://codeforces.com/contests"]);
+                        });
                 }
 
         });
