@@ -2,6 +2,9 @@
 
 Gnome extension that shows a countdown to the next codeforces contest in the top bar of gnome (panel). 
 
+![alt text](https://github.com/rag-hav/ContestCountdown/blob/master/screenshot.png?raw=true)
+
+
 ## Installation
 
 * Remove old installation
