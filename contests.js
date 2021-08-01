@@ -30,7 +30,7 @@ var Contests = class {
                 this.allContests = [];
                 this.nextContest = null;
                 this.loadFromFile();
-                this.refresh();
+                // this.refresh();
         }
 
         loadFromFile() {
@@ -39,6 +39,7 @@ var Contests = class {
                         let originalData = GLib.file_get_contents(this.cacheFile);
                         if (originalData[0])
                                 this.updateContests(JSON.parse(originalData[1]));
+
                         this.setNextContest();
                 } catch (e) {
                         global.log("ContestCountdown: No cache File / Cant open cache")
@@ -114,22 +115,27 @@ var Contests = class {
                 newContests.forEach((contest) => {
                         if (!this.allContests.some((existingContest) => existingContest.id == contest
                                         .id)) {
-                                contest.participating = true
+                                if (!('participating' in contest))
+                                        contest.participating = true;
                                 this.allContests.push(contest);
                         }
                 });
 
                 this.allContests = this._filterContest(this.allContests);
 
+
                 this.setNextContest();
                 this.saveToFile();
         }
 
         _filterContest(contests) {
-                contests = contests.filter((contest) => contest.startTimeSeconds && contest.phase == "BEFORE");
+                contests = contests.filter((contest) => contest.startTimeSeconds && contest.phase == "BEFORE" && this
+                        .secondsTillContest(contest) >= 0);
+
                 contests.sort((a, b) => {
-                        parseInt(a.startTimeSeconds) < parseInt(b.startTimeSeconds)
+                        return parseInt(a.startTimeSeconds) - parseInt(b.startTimeSeconds)
                 });
+
                 return contests;
         }
 
@@ -159,8 +165,8 @@ var Contests = class {
                 } else {
                         // when no next contest
                         // if still trying to load data, return -1
-                        // if no upcoming contest, return Infinity
                         // if failed to load, return -Infinity
+                        // if no upcoming contest, return Infinity
 
                         if (this.retriesLeft < 5)
                                 return -1;

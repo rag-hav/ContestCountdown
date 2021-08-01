@@ -1,4 +1,5 @@
 const Lang = imports.lang;
+const CheckBox = imports.ui.checkBox;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 const Util = imports.misc.util;
@@ -13,47 +14,52 @@ const Self = imports.misc.extensionUtils.getCurrentExtension();
 
 // https://github.com/ifl0w/RandomWallpaperGnome3/blob/develop/randomwallpaper%40iflow.space/elements.js
 
+// make nextcontest global to access in onClick of contestElement
+var nextContestElement;
 
-class AllContestsList extends PopupMenu.PopupMenuSection {
+var contestElement = GObject.registerClass({
+        GTypeName: 'contestElement ',
+}, class contestElement extends PopupMenu.PopupBaseMenuItem {
 
-        constructor(contests) {
-                super();
+        _init(contest, contests) {
+                super._init();
+                // save these to access in onClick
+                this.contest = contest;
+                this.contests = contests;
 
-                this.actor = new St.ScrollView({
-                        hscrollbar_policy: Gtk.PolicyType.NEVER,
-                        vscrollbar_policy: Gtk.PolicyType.AUTOMATIC
+                // create container to contain checkbox and contest details
+                this._container = new St.BoxLayout({
+                        vertical: false,
                 });
 
-                this.actor.add_actor(this.box);
+                // create checkbox
+                this._checkbox = new CheckBox.CheckBox();
+                this._checkbox.checked = contest.participating;
+                this._checkbox.connect('clicked', () => this.onClick());
 
-                for (let contest of contests.allContests) {
-                        global.log(contest.id);
-                        this.addMenuItem(new contestElement(contest));
-                }
+                // make contest label
+                this._contestLabel = new ContestDetails(contest);
+
+                // add both to container
+                this._container.add_child(this._checkbox);
+                this._container.add_child(this._contestLabel);
+
+                // add container to menu item
+                this.actor.add_child(this._container);
+
+                // open registration page on click
+                this.actor.connect('button-press-event', function() {
+                        Util.spawn(['xdg-open', "https://codeforces.com/contestRegistration/" + contest.id]);
+                });
+        }
+        onClick() {
+                this.contest.participating = this._checkbox.checked;
+                this.contests.setNextContest();
+                nextContestElement.update();
+                this.contests.saveToFile();
 
         }
-
-};
-
-var AllContestHeading =
-        GObject.registerClass({
-                GTypeName: 'AllContestHeading ',
-        }, class AllContestHeading extends PopupMenu.PopupBaseMenuItem {
-
-                _init(params) {
-
-                        super._init(params);
-                        this._headingLabel = new St.Label({
-                                text: 'All Contest',
-                                style_class: "cc-contest-heading",
-                        });
-                        this.actor.add_child(this._headingLabel);
-                        this.actor.connect('button-press-event', function() {
-                                Util.spawn(['xdg-open', "https://codeforces.com/contests"]);
-                        });
-                }
-
-        });
+});
 
 var ContestDetails = GObject.registerClass({
         GTypeName: 'ContestDetails',
@@ -85,7 +91,6 @@ var ContestDetails = GObject.registerClass({
 
                 this.add_child(nameLabel);
                 this.add_child(detailsLabel);
-
         }
 
 });
@@ -93,19 +98,28 @@ var ContestDetails = GObject.registerClass({
 var NextContestElement = GObject.registerClass({
         GTypeName: 'NextContestElement',
 }, class NextContestElement extends PopupMenu.PopupBaseMenuItem {
-        _init(contest) {
+        _init(contests) {
                 super._init();
-                // add container
+                // make container
+                this.contests = contests;
+                this.contest = contests.nextContest;
                 this._container = new St.BoxLayout({
                         vertical: true
                 });
 
+                // make heading
                 this._headingLabel = new St.Label({
                         text: 'Next Contest',
                         style_class: "cc-contest-heading",
                 });
 
-                this._contestLabel = new ContestDetails(contest);
+                if (this.contest)
+                        this._contestLabel = new ContestDetails(this.contest);
+                else
+                        this._contestLabel = new St.Label({
+                                text: 'No Upcoming Contest',
+                                style_class: "cc-inline",
+                        });
 
                 // add two labels to container
                 this._container.add_child(this._headingLabel);
@@ -118,31 +132,77 @@ var NextContestElement = GObject.registerClass({
                         Util.spawn(['xdg-open', "https://codeforces.com/contestRegistration/" + contest.id]);
                 });
         }
-});
+        update() {
+                if (this.contests.nextContest != this.contest) {
+                        this.contest = this.contests.nextContest;
+                        this._container.remove_child(this._contestLabel);
+                        if (this.contest)
+                                this._contestLabel = new ContestDetails(this.contest);
+                        else
+                                this._contestLabel = new St.Label({
+                                        text: 'No Upcoming Contest',
+                                        style_class: "cc-inline",
+                                });
 
+                        this._container.add_child(this._contestLabel);
+                }
 
-var contestElement = GObject.registerClass({
-        GTypeName: 'contestElement ',
-}, class contestElement extends PopupMenu.PopupBaseMenuItem {
-
-        _init(contest) {
-                super._init();
-                this._contestLabel = new ContestDetails(contest);
-                this.actor.add_child(this._contestLabel);
-                this.actor.connect('button-press-event', function() {
-                        Util.spawn(['xdg-open', "https://codeforces.com/contestRegistration/" + contest.id]);
-                });
         }
 });
+
+
+class AllContestsList extends PopupMenu.PopupMenuSection {
+
+        constructor(contests) {
+                super();
+
+                this.actor = new St.ScrollView({
+                        hscrollbar_policy: Gtk.PolicyType.NEVER,
+                        vscrollbar_policy: Gtk.PolicyType.AUTOMATIC
+                });
+
+                this.actor.add_actor(this.box);
+
+                for (let contest of contests.allContests) {
+                        this.addMenuItem(new contestElement(contest, contests));
+                }
+
+        }
+
+};
+
+var AllContestHeading =
+        GObject.registerClass({
+                GTypeName: 'AllContestHeading ',
+        }, class AllContestHeading extends PopupMenu.PopupBaseMenuItem {
+
+                _init(params) {
+
+                        super._init(params);
+                        this._headingLabel = new St.Label({
+                                text: 'All Contest',
+                                style_class: "cc-contest-heading",
+                        });
+                        this.actor.add_child(this._headingLabel);
+                        this.actor.connect('button-press-event', function() {
+                                Util.spawn(['xdg-open', "https://codeforces.com/contests"]);
+                        });
+                }
+
+        });
+
 
 
 function PopMenuMaker(parent) {
 
         // Next contest element
-        parent.menu.addMenuItem(new NextContestElement(parent.contests.nextContest));
+        nextContestElement = new NextContestElement(parent.contests);
+        parent.menu.addMenuItem(nextContestElement);
+
         // seperator line
         parent.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        // PopupMenuSection PopupSubMenuMenuItem PopupSeparatorMenuItem PopupBaseMenuItem
+
+        // All contest 
         parent.menu.addMenuItem(new AllContestHeading());
         parent.menu.addMenuItem(new AllContestsList(parent.contests));
 

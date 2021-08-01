@@ -172,7 +172,7 @@ function buildPrefsWidget() {
         settings.bind('left-padding', leftPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
         settings.bind('right-padding', rightPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
         settings.bind('show-seconds', showSecondsSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
-        settings.bind('notify-before', notifyBeforeEntry, 'active', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('notify-before', notifyBeforeEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
         extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
                 settings.set_string('extension-place', options[widget.get_active()]);
         }));
