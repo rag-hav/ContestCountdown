@@ -75,8 +75,8 @@ var ContestDetails = GObject.registerClass({
                         style_class: "cc-contest-name",
                 });
 
-                let hh = contest.durationSeconds / 3600;
-                let mm = (contest.durationSeconds % 3600) / 60;
+                let hh = Math.floor(contest.durationSeconds / 3600);
+                let mm = Math.floor((contest.durationSeconds % 3600) / 60);
 
                 var details = new Date(1000 * contest.startTimeSeconds).toLocaleFormat("%c") +
                         `\nDuration\t:  ${hh} hours ${mm} minutes` +
