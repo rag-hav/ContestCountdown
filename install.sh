@@ -19,6 +19,7 @@ gnome-extensions enable contestcountdown@raghav || (echo "\nCouldn't enable exte
 
 # done
 echo "Installation successful"
-echo "\nRestart your gnome shell for changes to take effect. Press 'Alt + F2' and enter 'r' in the dialog box"
+echo
+echo "Restart your gnome shell for changes to take effect. Press 'Alt + F2' and enter 'r' in the dialog box"
 echo "or just log out and log in, or restart the computer"
 exit 0
