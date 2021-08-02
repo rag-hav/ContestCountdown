@@ -7,7 +7,13 @@ Gnome extension that shows a countdown to the next codeforces contest in the top
 
 ## Installation
 
-* Remove old installation
+### Automatic
+
+Run 
+```curl https://raw.githubusercontent.com/rag-hav/ContestCountdown/master/install.sh | bash```
+
+### Manual
+* Remove old installation (if any)
     ```rm -rf ~/.local/share/gnome-shell/extensions/contestcountdown@raghav```
     
 * Download new code from github
@@ -18,3 +24,7 @@ Gnome extension that shows a countdown to the next codeforces contest in the top
     
 * Enable extension using any extension manager, or with the command
     ```gnome-extensions enable contestcountdown@raghav  ```
+
+## Compatiblity
+
+Extension tested on gnome shell version 3.36
