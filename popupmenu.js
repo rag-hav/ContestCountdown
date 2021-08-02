@@ -74,14 +74,14 @@ var ContestDetails = GObject.registerClass({
                         text: contest.name,
                         style_class: "cc-contest-name",
                 });
+                nameLabel.clutter_text.line_wrap = true;
 
                 let hh = Math.floor(contest.durationSeconds / 3600);
                 let mm = Math.floor((contest.durationSeconds % 3600) / 60);
 
-                var details = new Date(1000 * contest.startTimeSeconds).toLocaleFormat("%c") +
-                        `\nDuration\t:  ${hh} hours ${mm} minutes` +
-                        `\nType\t\t:  ${contest.type}`;
-
+                var details = `Date\t\t:  ${ new Date(1000 * contest.startTimeSeconds).toLocaleFormat("%A %d %B %Y") } ` +
+                        `\nTime\t\t:  ${ new Date(1000 * contest.startTimeSeconds).toLocaleFormat("%r") } ` +
+                        `\nDuration\t:  ${hh} hours ${mm} minutes`;
 
                 var detailsLabel = new St.Label({
                         text: details,
@@ -128,8 +128,11 @@ var NextContestElement = GObject.registerClass({
                 this.actor.add_child(this._container);
 
                 // open codeforces on click
-                this.actor.connect('button-press-event', function() {
-                        Util.spawn(['xdg-open', "https://codeforces.com/contestRegistration/" + contest.id]);
+                this.actor.connect('button-press-event', () => {
+                        global.log("click");
+                        Util.spawn(['xdg-open', "https://codeforces.com/contestRegistration/" + this.contests
+                                .nextContest.id
+                        ]);
                 });
         }
         update() {

@@ -6,10 +6,12 @@
 }
 .cc-inline{
         padding-bottom: 0.3em;
-        margin-left: 25px;
+        margin-left: 35px;
 }
 
 .cc-contest-name{
+        width:250px;
+        text-align: justify;
         font-size: 110%;
         padding-bottom: 0.4em;
         margin-left: 15px;
