@@ -30,7 +30,7 @@ var Contests = class {
                 this.allContests = [];
                 this.nextContest = null;
                 this.loadFromFile();
-                // this.refresh();
+                this.refresh();
         }
 
         loadFromFile() {
