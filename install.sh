@@ -11,7 +11,7 @@ fi
 
 # clone from the repository
 echo "Cloning from repository..."
-git clone https://github.com/rag-hav/ContestCountdown.git --branch master --single-branch "$EXTENSION_DIR" || (echo "\nCouldn't clone repository" && exit 1)
+git clone git@github.com:rag-hav/ContestCountdown.git --branch master --single-branch "$EXTENSION_DIR" || (echo "\nCouldn't clone repository" && exit 1)
 
 # enable the extension
 echo "Enabling extension..."
