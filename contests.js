@@ -110,17 +110,18 @@ var Contests = class {
 
         updateContests(newContests) {
 
-                newContests = this._filterContest(newContests);
-
-                newContests.forEach((contest) => {
-                        if (!this.allContests.some((existingContest) => existingContest.id == contest
-                                        .id)) {
-                                if (!('participating' in contest))
-                                        contest.participating = true;
+                for (let newContest of this._filterContest(newContests)) {
+                        for (let existingContest of this.allContests) {
+                                if (existingContest.id == newContest.id) { 
+                                        newContest.participating = existingContest.participating; 
+                                        break;
+                                }
                         }
-                });
+                        if (!('participating' in newContest))
+                                newContest.participating = true;
+                }
 
-                this.allContests = this._filterContest(newContests);
+                this.allContests = newContests;
 
                 this.setNextContest();
                 this.saveToFile();
