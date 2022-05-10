@@ -117,10 +117,12 @@ var Contests = class {
                                         .id)) {
                                 if (!('participating' in contest))
                                         contest.participating = true;
+                                this.allContests.push(contest);
                         }
                 });
 
-                this.allContests = this._filterContest(newContests);
+                this.allContests = this._filterContest(this.allContests);
+
 
                 this.setNextContest();
                 this.saveToFile();
