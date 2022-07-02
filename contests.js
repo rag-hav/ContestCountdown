@@ -9,6 +9,10 @@ const GLib = imports.gi.GLib;
 const Mainloop = imports.mainloop;
 const GObject = imports.gi.GObject;
 
+// version
+const Config = imports.misc.config;
+const [major, minor] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const Self = ExtensionUtils.getCurrentExtension();
 
@@ -16,11 +20,7 @@ const CODEFORCES_API_URL = "https://codeforces.com/api/contest.list?gym=false";
 
 var Contests = class Contests {
     constructor(updateCallback) {
-        // https://github.com/ifl0w/RandomWallpaperGnome3/blob/develop/randomwallpaper%40iflow.space/wallpaperController.js
-        let xdg_cache_home = GLib.getenv("XDG_CACHE_HOME");
-        if (!xdg_cache_home) xdg_cache_home = `${GLib.getenv("HOME")}/.cache`;
-        this.cacheLocation = `${xdg_cache_home}/${Self.metadata["uuid"]}/`;
-        this.cacheFile = this.cacheLocation + "contest.json";
+        this.cacheFilePath = GLib.build_filenamev([GLib.get_user_cache_dir(), 'ContestCountdown', 'contests.json']);
 
         this.updateCallback = updateCallback;
         this.retriesLeft = 5;
@@ -39,27 +39,32 @@ var Contests = class Contests {
     loadFromFile() {
         this.allContests = [];
         try {
-            let originalData = GLib.file_get_contents(this.cacheFile);
-            if (originalData[0])
-                this.updateContests(JSON.parse(
-                    originalData[1] instanceof Uint8Array ?
-                        imports.byteArray.toString(originalData[1]) :
-                        originalData[1].toString()
-                ));
+            const cacheFile = Gio.File.new_for_path(this.cacheFilePath);
+            const [, contents, etag] = cacheFile.load_contents(null);
 
+            const contentsString = (major < 40) ?
+                (new TextDecoder('utf-8')).decode(contents) :
+                imports.byteArray.toString(contents);
+
+            this.updateContests(JSON.parse(contentsString));
             this.setNextContest();
-        } catch (e) {
+
+        }
+        catch (e) {
             global.log("ContestCountdown: No cache File / Cant open cache");
             global.log(e);
         }
     }
 
     saveToFile() {
-        GLib.mkdir_with_parents(this.cacheLocation, parseInt("0755", 8));
-        let file = Gio.file_new_for_path(this.cacheFile);
-        let fstream = file.replace(null, false, Gio.FileCreateFlags.NONE, null);
-        fstream.write(JSON.stringify(this.allContests), null);
-        fstream.close(null);
+        let cacheFile = Gio.File.new_for_path(this.cacheFilePath);
+        if (GLib.mkdir_with_parents(cacheFile.get_parent().get_path(), parseInt("0755", 8)) === 0) {
+            let [_success, tag] = cacheFile.replace_contents(JSON.stringify(this.allContests), null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+            if (!_success)
+                global.log("ContestCountdown: Failed to write to cache file");
+        } else {
+            global.log("ContestCountdown: Failed to create cache folder");
+        }
     }
 
     refresh() {
