@@ -1,12 +1,12 @@
 #!/bin/sh
 
-EXTENSION_DIR="${HOME}/.local/share/gnome-shell/extensions/contestcountdown@raghav/"
+EXTENSION_DIR="$HOME/.local/share/gnome-shell/extensions/contestcountdown@raghav/"
 
 # remove previous installation
 if [ -d "$EXTENSION_DIR" ]; then
-        echo -n "Removing previous installation..."
-        rm -rf "$EXTENSION_DIR"
-        echo "done"
+    echo -n "Removing previous installation..."
+    rm -rf "$EXTENSION_DIR"
+    echo "done"
 fi
 
 # clone from the repository
