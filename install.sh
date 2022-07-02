@@ -11,11 +11,11 @@ fi
 
 # clone from the repository
 echo "Cloning from repository..."
-git clone https://github.com/rag-hav/ContestCountdown --branch master --single-branch "$EXTENSION_DIR" || (echo "\nCouldn't clone repository" && exit 1)
+git clone https://github.com/rag-hav/ContestCountdown --branch master --single-branch "$EXTENSION_DIR" || (printf "\nCouldn't clone repository" && exit 1)
 
 # enable the extension
 echo "Enabling extension..."
-gnome-extensions enable contestcountdown@raghav || (echo "\nCouldn't enable extension" && exit 1)
+gnome-extensions enable contestcountdown@raghav || (printf "\nCouldn't enable extension" && exit 1)
 
 # done
 echo "Installation successful"
