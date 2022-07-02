@@ -27,4 +27,4 @@ Run
 
 ## Compatiblity
 
-Extension tested on gnome shell version 3.36
+Extension tested on gnome shell version 42
