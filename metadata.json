@@ -3,10 +3,8 @@
     "description": "Countdown to next codeforces contest",
     "uuid": "contestcountdown@raghav",
     "shell-version": [
-        "36",
         "38",
         "40",
-        "41",
         "42"
     ]
 }
