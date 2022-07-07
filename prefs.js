@@ -2,24 +2,16 @@
 
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
-const Lang = imports.lang;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Self = ExtensionUtils.getCurrentExtension();
+const { log } = Self.imports.logging;
 
 function init() { }
 
 function buildPrefsWidget() {
 
-    let gschema = Gio.SettingsSchemaSource.new_from_directory(
-        Self.dir.get_child('schemas').get_path(),
-        Gio.SettingsSchemaSource.get_default(),
-        false
-    );
-
-    let settings = new Gio.Settings({
-        settings_schema: gschema.lookup('org.gnome.shell.extensions.contestcountdown', true)
-    });
+    let settings = ExtensionUtils.getSettings();
 
     let prefsWidget = new Gtk.Grid({
         column_spacing: 12,
@@ -167,14 +159,17 @@ function buildPrefsWidget() {
     prefsWidget.attach(notifyBeforeInfoLabel, 0, index, 2, 1);
 
 
-    //settings.bind('command', commandEntry, 'text', Gio.SettingsBindFlags.DEFAULT);
+    // https://docs.gtk.org/gio/method.Settings.bind.html
+    // settings.bind('settings-key', object, 'property', Gio.SettingsBindFlags.DEFAULT);
+    // change the value at key in settings when this property of object changes
     settings.bind('left-padding', leftPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('right-padding', rightPaddingEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('show-seconds', showSecondsSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
     settings.bind('notify-before', notifyBeforeEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
-    extensionPlaceComboBox.connect('changed', Lang.bind(this, function(widget) {
+
+    extensionPlaceComboBox.connect('changed', function(widget) {
         settings.set_string('extension-place', options[widget.get_active()]);
-    }));
+    }.bind(this));
     settings.bind('extension-index', extensionIndexEntry, 'value', Gio.SettingsBindFlags.DEFAULT);
 
     return prefsWidget;

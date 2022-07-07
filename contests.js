@@ -1,13 +1,4 @@
-// web
-const Soup = imports.gi.Soup;
-
-// file system
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-
-// set timeout
-const Mainloop = imports.mainloop;
-const GObject = imports.gi.GObject;
+const { Gio, GLib, GObject } = imports.gi;
 
 // version
 const Config = imports.misc.config;
@@ -16,172 +7,189 @@ const [major, minor] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 const ExtensionUtils = imports.misc.extensionUtils;
 const Self = ExtensionUtils.getCurrentExtension();
 
-const CODEFORCES_API_URL = "https://codeforces.com/api/contest.list?gym=false";
+const { Contest, DownloadContests } = Self.imports.scraper;
+const { log } = Self.imports.logging;
 
-var Contests = class Contests {
-    constructor(updateCallback) {
-        this.cacheFilePath = GLib.build_filenamev([GLib.get_user_cache_dir(), 'ContestCountdown', 'contests.json']);
-
-        this.updateCallback = updateCallback;
-        this.retriesLeft = 5;
-        this.retryTime = 1;
-        this.refreshTimeout = null;
-        this.allContests = [];
-        this.nextContest = null;
-        this.loadFromFile();
-        this.refresh();
-    }
-
-    stop() {
-        GLib.source_remove(this.refreshTimeout);
-    }
-
-    loadFromFile() {
-        this.allContests = [];
-        try {
-            const cacheFile = Gio.File.new_for_path(this.cacheFilePath);
-            const [, contents, etag] = cacheFile.load_contents(null);
-
-            const contentsString = (major < 40) ?
-                (new TextDecoder('utf-8')).decode(contents) :
-                imports.byteArray.toString(contents);
-
-            this.updateContests(JSON.parse(contentsString));
-            this.setNextContest();
-
+var Contests = GObject.registerClass(
+    {
+        Signals: {
+            'update-contests': {},
+            'update-next-contest': {},
         }
-        catch (e) {
-            global.log("ContestCountdown: No cache File / Cant open cache");
-            global.log(e);
+    },
+
+    class Contests extends GObject.Object {
+        _init() {
+            super._init();
+            let cacheFilePath = GLib.build_filenamev([GLib.get_user_cache_dir(), 'ContestCountdown', 'contests.json']);
+            this.cacheFile = Gio.File.new_for_path(cacheFilePath);
+
+            this.allContests = [];
+
+            // index of next contest (whose countdown is shown)
+            // -1 loading
+            // -2 No upcoming contest
+            // -3 failed to load
+            this.nextContest = -1;
+
+            this.timeBetween = 1;
+            this.triesLeft = 5;
+            this.timerId = null;
+
+            // this.emit('update-contests');
+
+            this.loadCache()
+                .then(this.refresh())
+                .catch(e => {
+                    logError("Contest Countdown", e);
+                });
         }
-    }
 
-    saveToFile() {
-        let cacheFile = Gio.File.new_for_path(this.cacheFilePath);
-        if (GLib.mkdir_with_parents(cacheFile.get_parent().get_path(), parseInt("0755", 8)) === 0) {
-            let [_success, tag] = cacheFile.replace_contents(JSON.stringify(this.allContests), null, false, Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-            if (!_success)
-                global.log("ContestCountdown: Failed to write to cache file");
-        } else {
-            global.log("ContestCountdown: Failed to create cache folder");
-        }
-    }
-
-    refresh() {
-        this.retriesLeft--;
-
-        let session = new Soup.SessionAsync();
-        let message = Soup.Message.new("GET", CODEFORCES_API_URL);
-
-        session.queue_message(message, (session, message) => {
+        async loadCache() {
+            log.info("reading cache");
             try {
-                let response = JSON.parse(message.response_body.data);
-                if (response.status != "OK") throw "Got non OK status";
+                return new Promise((resolve, reject) => {
+                    this.cacheFile.load_contents_async(
+                        null,
+                        (_, result) => {
+                            let [, contents, __1] = this.cacheFile.load_contents_finish(result);
+                            let contentsString = "[]";
+                            if (contents)
+                                contentsString = (major >= 40) ?
+                                    (new TextDecoder('utf-8')).decode(contents) :
+                                    imports.byteArray.toString(contents);
 
-                this.updateContests(response.result);
-                this.updateCallback();
-
-                // if successful after retries, restore these
-                this.retriesLeft = 5;
-                this.retryTime = 1;
-                this.refreshTimeout = GLib.timeout_add_seconds(
-                    GLib.PRIORITY_DEFAULT,
-                    6 * 3600,
-                    this.refresh
-                );
-            } catch (e) {
-                global.log(
-                    "ContestCountdown: Contest refresh failed\n retry left " +
-                    this.retriesLeft +
-                    "\n" +
-                    e
-                );
-
-                if (this.retriesLeft) {
-                    // if retries are left, then retry with exponentialy increasing time
-                    this.retryTime *= 2;
-                    this.refreshTimeout = GLib.timeout_add_seconds(
-                        GLib.PRIORITY_DEFAULT,
-                        this.retryTime,
-                        this.refresh
+                            this.updateContests(JSON.parse(contentsString).map(
+                                c => new Contest(c.id, c.name, c.platform, new Date(c.date), c.duration)
+                            ));
+                            resolve();
+                        }
                     );
-                } else {
-                    // permanent fail, no more try
-                    this.retriesLeft = 5;
-                    this.retryTime = 1;
-                }
-            }
-        });
-        return false;
-    }
-
-    updateContests(newContests) {
-        newContests = this._filterContest(newContests);
-
-        for (let contest of newContests) {
-            if ("participating" in contest) continue;
-            contest.participating = true;
-            for (let existingContest of this.allContests) {
-                if (existingContest.id == contest.id) {
-                    contest.participating = existingContest.participating;
-                }
+                });
+            } catch (e) {
+                log.error("No cache File / Cant open cache", e);
             }
         }
 
-        this.allContests = newContests;
+        setNextContest(val) {
+            log.info("update next contest");
+            this.nextContest = val;
+            this.emit('update-next-contest');
+        }
 
-        this.setNextContest();
-        this.saveToFile();
-    }
 
-    _filterContest(contests) {
-        contests = contests.filter(
-            (contest) =>
-                contest.startTimeSeconds &&
-                contest.phase == "BEFORE" &&
-                this.secondsTillContest(contest) >= 0
-        );
+        // updates the this.nextContest field and saves allContests to cache file
+        // is called after clicking on checkbox and after refreshing contests.
+        updateCache() {
+            log.info("updateCache");
 
-        contests.sort((a, b) => {
-            return parseInt(a.startTimeSeconds) - parseInt(b.startTimeSeconds);
-        });
-
-        return contests;
-    }
-
-    secondsTillContest(contest) {
-        return Math.floor(
-            (new Date(contest.startTimeSeconds * 1000) - new Date()) / 1000
-        );
-    }
-
-    setNextContest() {
-        this.nextContest = null;
-        this.allContests = this._filterContest(this.allContests);
-        for (let contest of this.allContests)
-            if (contest.participating) {
-                this.nextContest = contest;
-                break;
-            }
-    }
-
-    secondsTillNextContest() {
-        if (this.nextContest) {
-            let timeDiff = this.secondsTillContest(this.nextContest);
-            if (timeDiff >= 0) return timeDiff;
+            let newNext = this.allContests.findIndex((c) => c.participating);
+            // log.info("updateCache", newNext, JSON.stringify(this.allContests, null, 2));
+            if (newNext >= 0)
+                this.setNextContest(newNext);
             else {
-                this.setNextContest();
-                return this.secondsTillNextContest();
+                if (this.retriesLeft)
+                    this.setNextContest(-1); // loading
+                else if (this.allContests.length)
+                    this.setNextContest(-2); // no upcoming
+                else
+                    this.setNextContest(-3); // failed to load
             }
-        } else {
-            // when no next contest
-            // if still trying to load data, return -1
-            // if failed to load, return -Infinity
-            // if no upcoming contest, return Infinity
 
-            if (this.retriesLeft < 5) return -1;
-            if (this.allContests.length == 0) return -Infinity;
-            return Infinity;
+            if (!GLib.mkdir_with_parents(this.cacheFile.get_parent().get_path(), parseInt("0755", 8)) === 0) {
+                log.error("Failed to create cache folder");
+                resolve();
+            }
+
+            this.cacheFile.replace_contents_bytes_async(
+                new GLib.Bytes(JSON.stringify(this.allContests)),
+                null,
+                false,
+                Gio.FileCreateFlags.REPLACE_DESTINATION,
+                null,
+                (_, result) => {
+                    try {
+                        this.cacheFile.replace_contents_finish(result);
+                    } catch (e) {
+                        log.error("Failed to write to cache file", e);
+                    }
+                }
+            );
+
         }
-    }
-};
+
+        async refresh() {
+            log.info("refreshing...");
+
+            try {
+                let result = await DownloadContests();
+
+                if (this.timerId)
+                    GLib.source_remove(this.timerId);
+                this.timerId = null;
+
+                if (result.status) {
+                    this.updateContests(result.value, !result.status);
+
+                    // restore these back to default
+                    this.timeBetween = 1;
+                    this.triesLeft = 5;
+                    this.timerId = GLib.timeout_add_seconds(
+                        GLib.PRIORITY_DEFAULT,
+                        2 * 3600, // refresh 2 hours later
+                        this.refresh.bind(this)
+                    );
+                } else { // refresh failed
+                    this.timeBetween *= 2;
+                    this.triesLeft -= 1;
+
+                    if (this.triesLeft > 0) {
+                        this.timerId = GLib.timeout_add_seconds(
+                            GLib.PRIORITY_DEFAULT,
+                            this.timeBetween,
+                            this.refresh.bind(this)
+                        );
+                    }
+                }
+
+                return false; // not persistent timeout
+            }
+            catch (e) {
+                log.error("refresh failed", e);
+            }
+        }
+
+        destroy() {
+            if (this.timerId)
+                GLib.source_remove(this.timerId);
+            // super.destroy();
+        }
+
+        updateContests(newContests, keep = true) {
+            log.info("updateContests");
+
+            let oldContests = {};
+            for (let contest of this.allContests)
+                oldContests[contest.id] = { contest, keep };
+
+            // if the contest does not have participating defined
+            // then get the value of participating from this.allContests 
+            for (let contest of newContests) {
+                contest.onChange = (() => { this.emit('update-contests') }).bind(this);
+                let old = oldContests[contest.id];
+                if (old)
+                    old.keep = false;
+                if (contest.participating == null)
+                    contest.participating = (old ? old.contest.participating : true);
+            }
+
+            if (keep)
+                newContests.push(...this.allContests.filter(c => oldContests[c.id].keep));
+            newContests.sort((a, b) => a.date > b.date);
+
+            this.allContests = newContests;
+            this.updateCache();
+            this.emit('update-contests');
+        }
+    });
+

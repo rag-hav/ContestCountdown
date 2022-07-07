@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema id="org.gnome.shell.extensions.contest-countdown" path="/org/gnome/shell/extensions/contest-countdown/">
+        <key name="left-padding" type="i">
+            <default>30</default>
+        </key>
+        <key name="right-padding" type="i">
+            <default>30</default>
+        </key>
+        <key name="extension-place" type="s">
+            <default>'left'</default>
+        </key>
+        <key name="extension-index" type="i">
+            <default>2</default>
+        </key>
+        <key name="show-seconds" type="b">
+            <default>true</default>
+        </key>
+        <key name="notify-before" type="i">
+            <default>60</default>
+        </key>
+    </schema>
+</schemalist>
