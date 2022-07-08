@@ -83,19 +83,6 @@ var Contests = GObject.registerClass(
         updateCache() {
             log.info("updateCache");
 
-            let newNext = this.allContests.findIndex((c) => c.participating);
-            // log.info("updateCache", newNext, JSON.stringify(this.allContests, null, 2));
-            if (newNext >= 0)
-                this.setNextContest(newNext);
-            else {
-                if (this.retriesLeft)
-                    this.setNextContest(-1); // loading
-                else if (this.allContests.length)
-                    this.setNextContest(-2); // no upcoming
-                else
-                    this.setNextContest(-3); // failed to load
-            }
-
             if (!GLib.mkdir_with_parents(this.cacheFile.get_parent().get_path(), parseInt("0755", 8)) === 0) {
                 log.error("Failed to create cache folder");
                 resolve();
@@ -175,7 +162,7 @@ var Contests = GObject.registerClass(
             // if the contest does not have participating defined
             // then get the value of participating from this.allContests 
             for (let contest of newContests) {
-                contest.onChange = (() => { this.emit('update-contests') }).bind(this);
+                contest.onChange = this.onChange.bind(this);
                 let old = oldContests[contest.id];
                 if (old)
                     old.keep = false;
@@ -185,9 +172,27 @@ var Contests = GObject.registerClass(
 
             if (keep)
                 newContests.push(...this.allContests.filter(c => oldContests[c.id].keep));
-            newContests.sort((a, b) => a.date > b.date);
 
             this.allContests = newContests;
+            this.onChange();
+        }
+
+        onChange() {
+            let curDate = new Date();
+
+            this.allContests = this.allContests.filter(c => c.date > curDate);
+            this.allContests.sort((a, b) => a.date > b.date);
+
+            let newNext = this.allContests.findIndex((c) => c.participating);
+            if (newNext >= 0)
+                this.setNextContest(newNext);
+            else if (this.retriesLeft)
+                this.setNextContest(-1); // loading
+            else if (this.allContests.length)
+                this.setNextContest(-2); // no upcoming
+            else
+                this.setNextContest(-3); // failed to load
+
             this.updateCache();
             this.emit('update-contests');
         }

@@ -24,6 +24,8 @@ var Contest = class Contest {
             this.notified = true;
             this.onChange();
         }
+        else if (res <= 0)
+            this.onChange();
         return res;
     }
 }
