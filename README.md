@@ -19,9 +19,11 @@ Run
 * Download new code from github
     ```git clone https://github.com/rag-hav/ContestCountdown.git --branch master --single-branch ~/.local/share/gnome-shell/extensions/contestcountdown@raghav/```
 
-* If your Gnome version is < 40
-    * ```cd ~/.local/share/gnome-shell/extensions/contestcountdown@raghav/```
-    * git checkout 32d1b1533a1ef24dae98c64389c2058f1a50c2f3
+* If your Gnome version is < 40 (you can check using `gnome-shell --version`)
+    * Goto extension folder
+```cd ~/.local/share/gnome-shell/extensions/contestcountdown@raghav/```
+    * Checkout commit before gnome 42 updates 
+```git checkout 32d1b1533a1ef24dae98c64389c2058f1a50c2f3```
 
 * Restart gnome by pressing `alt + F2` and typing `r` in the dialog box.
 
