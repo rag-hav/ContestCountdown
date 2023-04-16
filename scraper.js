@@ -30,41 +30,6 @@ var Contest = class Contest {
     }
 }
 
-// No longer in use
-let codeforces = function(session) {
-    const CODEFORCES_API_URL = "https://codeforces.com/api/contest.list?gym=false";
-    return new Promise((resolve, reject) => {
-        let message = Soup.Message.new("GET", CODEFORCES_API_URL);
-        session.queue_message(message, (_, message) => {
-
-            let response = JSON.parse(message.response_body.data);
-            if (!response || response.status != "OK") {
-                reject();
-                return;
-            }
-
-            let result = [];
-            for (let entry of response.result)
-                if (entry.phase == "BEFORE")
-                    result.push(new Contest(
-                        "https://codeforces.com/contestRegistration/" + contest.id,
-                        entry.name,
-                        "CodeForces",
-                        new Date(entry.startTimeSeconds * 1000),
-                        duration = entry.durationSeconds)
-                    );
-
-            log.info("codeforces.com download succesful");
-            // log.info("codeforces processed response", JSON.stringify(result, null, 2)); 
-            resolve(result);
-        }
-        )
-    }).catch((e) => {
-        log.error("Failed to get codeforces contests", e);
-        reject();
-    })
-}
-
 let kontests = function(session) {
     const KONTESTS_API_URL = "https://kontests.net/api/v1/all";
     return new Promise((resolve, reject) => {
