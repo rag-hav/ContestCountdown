@@ -5,6 +5,7 @@ const Self = ExtensionUtils.getCurrentExtension();
 const { Contests } = Self.imports.contests;
 const { Contest } = Self.imports.scraper;
 const { log } = Self.imports.logging;
+const Util = imports.misc.util;
 
 let contests;
 
@@ -157,7 +158,7 @@ var contestElement = GObject.registerClass(
             this.connect("button-press-event", function() {
                 Util.spawn([
                     "xdg-open",
-                    "https://codeforces.com/contestRegistration/" + contest.id,
+                    contest.url,
                 ]);
             });
         }
@@ -186,7 +187,8 @@ var ContestDetails = GObject.registerClass(
             let mm = Math.floor((contest.duration % 3600) / 60);
 
             var details =
-                `Date\t\t:  ${contest.date.toLocaleFormat(
+                `\nPlatform\t\t:  ${contest.platform} ` +
+                `\nDate\t\t:  ${contest.date.toLocaleFormat(
                     "%A %d %B %Y"
                 )} ` +
                 `\nTime\t\t:  ${contest.date.toLocaleFormat("%r")} ` +
@@ -238,8 +240,7 @@ var NextContestElement = GObject.registerClass(
                 if (this.contest)
                     Util.spawn([
                         "xdg-open",
-                        "https://codeforces.com/contestRegistration/" +
-                        this.contest.id,
+                        this.contest.url,
                     ]);
             });
 

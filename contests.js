@@ -60,7 +60,7 @@ var Contests = GObject.registerClass(
                                     imports.byteArray.toString(contents);
 
                             this.updateContests(JSON.parse(contentsString).map(
-                                c => new Contest(c.id, c.name, c.platform, new Date(c.date), c.duration)
+                                c => new Contest(c.url, c.name, c.platform, new Date(c.date), c.duration)
                             ));
                             resolve();
                         }
@@ -157,13 +157,13 @@ var Contests = GObject.registerClass(
 
             let oldContests = {};
             for (let contest of this.allContests)
-                oldContests[contest.id] = { contest, keep };
+                oldContests[contest.url] = { contest, keep };
 
             // if the contest does not have participating defined
             // then get the value of participating from this.allContests 
             for (let contest of newContests) {
                 contest.onChange = this.onChange.bind(this);
-                let old = oldContests[contest.id];
+                let old = oldContests[contest.url];
                 if (old)
                     old.keep = false;
                 if (contest.participating == null)
@@ -171,7 +171,7 @@ var Contests = GObject.registerClass(
             }
 
             if (keep)
-                newContests.push(...this.allContests.filter(c => oldContests[c.id].keep));
+                newContests.push(...this.allContests.filter(c => oldContests[c.url].keep));
 
             this.allContests = newContests;
             this.onChange();

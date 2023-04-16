@@ -1,9 +1,9 @@
 {
     "name": "Contest Countdown",
-    "description": "Countdown to next codeforces contest. This extension uses the API of codeforces.com to get the list of all upcoming contests. A countdown to the closest upcoming contest (that you are participating in) is shown in the panel, which can be clicked on to view the list of all upcoming contests.",
+    "description": "Countdown to next coding contests. This extension uses the API of kontests.net to get the list of all upcoming contests. A countdown to the closest upcoming contest (that you are participating in) is shown in the panel, which can be clicked on to view the list of all upcoming contests.",
     "uuid": "contestcountdown@raghav",
     "settings-schema": "org.gnome.shell.extensions.contest-countdown",
-    "version": 3,
+    "version": 4,
     "url": "https://github.com/rag-hav/contestcountdown",
     "shell-version": [
         "40",
