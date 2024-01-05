@@ -6,7 +6,7 @@ const Self = ExtensionUtils.getCurrentExtension();
 const { Contest } = Self.imports.contest;
 const { getClist, getCodeforces } = Self.imports.scraper;
 
-export var ContestManager = GObject.registerClass(
+var ContestManager = GObject.registerClass(
     {
         Signals: {
             'update-contests': {},

@@ -1,4 +1,4 @@
-export function getDateString(date) {
+function getDateString(date) {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -10,7 +10,7 @@ export function getDateString(date) {
     return `${day} ${dayOfMonth} ${month} ${year}`;
 }
 
-export function getTimeString(date) {
+function getTimeString(date) {
     const formatter = new Intl.DateTimeFormat('en-US', {
         hour: '2-digit',
         minute: '2-digit',
@@ -21,7 +21,7 @@ export function getTimeString(date) {
     return formatter.format(date);
 }
 
-export function getCurrentTime() {
+function getCurrentTime() {
     const date = new Date();
     
     const year = date.getUTCFullYear();

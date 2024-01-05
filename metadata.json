@@ -6,6 +6,8 @@
     "version": 4,
     "url": "https://github.com/rag-hav/contestcountdown",
     "shell-version": [
-        "45"
+        "42",
+        "43",
+        "44"
     ]
 }

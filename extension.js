@@ -7,8 +7,7 @@ function init() {}
 
 function enable() {
         console.debug("Starting");
-        this._settings = this.getSettings()
-        // let contests = new Contests();
+        this._settings = ExtensionUtils.getSettings();        // let contests = new Contests();
         // contests.emit('update-contests');
         this.ccMenu = new ContestCountdownButton(this._settings);
 

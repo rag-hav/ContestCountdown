@@ -1,4 +1,4 @@
-export class Contest {
+class Contest {
     constructor(url, name, website, date, duration, participating = null) {
         this.url = url;
         this.name = name;

@@ -20,7 +20,7 @@ function getFromUrl(url) {
     return JSON.parse(decoder.decode(bytes.get_data()));
 }
 
-export function getClist(clistUsername, clistToken, useWhitelist, whitelist, blacklist) {
+function getClist(clistUsername, clistToken, useWhitelist, whitelist, blacklist) {
     whitelist = whitelist.split(',').map(e => e.trim());
     blacklist = blacklist.split(',').map(e => e.trim());
 
@@ -39,7 +39,7 @@ export function getClist(clistUsername, clistToken, useWhitelist, whitelist, bla
     return result;
 
 }
-export function getCodeforces() {
+function getCodeforces() {
     let result = [];
     let response = getFromUrl("https://codeforces.com/api/contest.list?gym=false");
     if (!response || response.status !== "OK") {
@@ -61,7 +61,7 @@ export function getCodeforces() {
 }
 
 
-export function getClistHosts(clistUsername, clistToken) {
+function getClistHosts(clistUsername, clistToken) {
     try {
         let hosts = new Set(getClist(clistUsername, clistToken, false, "", "").map((contest) => contest.website));
         return [...hosts].join(",");

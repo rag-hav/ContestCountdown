@@ -357,5 +357,3 @@ let AllContestHeading = GObject.registerClass(
         }
     }
 );
-
-export { ContestCountdownButton };

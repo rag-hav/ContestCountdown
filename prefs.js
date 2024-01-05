@@ -9,7 +9,7 @@ const { getClistHosts } = Self.imports.scraper;
 function init(){}
 
 function fillPreferencesWindow(window) {
-        let settings = this.getSettings();
+        let settings = ExtensionUtils.getSettings();
 
         //panel page:
         let page = addPreferencesPage(window, 'Panel', 'computer-symbolic');
