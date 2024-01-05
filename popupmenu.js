@@ -2,12 +2,25 @@ const { main, popupMenu, checkBox, panelMenu } = imports.ui;
 const { GLib, St, GObject, Clutter } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Self = ExtensionUtils.getCurrentExtension();
-const { Contests } = Self.imports.contests;
-const { Contest } = Self.imports.scraper;
-const { log } = Self.imports.logging;
+const { ContestManager } = Self.imports.contestmanager;
+const { getDateString, getTimeString } = Self.imports.utils;
 const Util = imports.misc.util;
 
-let contests;
+let contestManager;
+
+function getTimer(contest, onComplete, notifyBefore = - 1) {
+    let notified = false;
+    return () => {
+        let res = Math.floor((contest.date - new Date()) / 1000);
+        if (!notified && res <= notifyBefore) {
+            main.notify("Contest Countdown", contest.name);
+            notified = true;
+        }
+        else if (res <= 0)
+            onComplete();
+        return res;
+    }
+}
 
 var ContestCountdownButton = GObject.registerClass(
     {},
@@ -15,46 +28,73 @@ var ContestCountdownButton = GObject.registerClass(
         _init(settings) {
             super._init(0.0, "Contest Countdown", false);
 
+            contestManager = new ContestManager(settings);
             this.settings = settings;
-            contests = new Contests();
+
             this.refreshTimeout = null;
 
-            this.buttonText = new St.Label({
+            this.box = new St.BoxLayout();
+            this.add_child(this.box);
+
+            this.label = new St.Label({
                 text: _("Intializing..."),
-                style:
-                    "padding-left: " +
-                    this.settings.get_int("left-padding") +
-                    "px;" +
-                    "padding-right: " +
-                    this.settings.get_int("right-padding") +
-                    "px; ",
-                y_align: Clutter.ActorAlign.CENTER,
-                x_align: Clutter.ActorAlign.FILL,
+                y_align: Clutter.ActorAlign.CENTER
             });
 
+            this.box.add_child(this.label);
 
-            // Create a new layout, add the text and add the actor to the layout
-            let buttonBox = new St.BoxLayout();
-            buttonBox.add(this.buttonText);
-            this.add_actor(buttonBox);
+            const EXTENSION_INDEX = this.settings.get_int('extension-index');
+            const EXTENSION_PLACE = this.settings.get_string('extension-place');
+            main.panel.addToStatusArea('Contest Countdown', this, EXTENSION_INDEX, EXTENSION_PLACE);
 
             // create the popup menu
-            this.update();
+            this.updateMenu();
+            this.updatePadding();
+            this.updateTrayPosition();
 
-            //Place the actor/label at the "end" (rightmost) position within the left box
-            main.panel._leftBox.insert_child_at_index(this, main.panel._leftBox.get_children().length);
 
-            contests.connect('update-next-contest', this.updateTimerFunc.bind(this));
+            this.settings.connect('changed::left-padding', this.updatePadding.bind(this));
+            this.settings.connect('changed::right-padding', this.updatePadding.bind(this));
+            this.settings.connect('changed::extension-index', this.updateTrayPosition.bind(this));
+            this.settings.connect('changed::extension-place', this.updateTrayPosition.bind(this));
+
+
+            contestManager.connect('update-next-contest', this.updateTimerFunc.bind(this));
             this.updateTimerFunc();
         }
 
+
+        updatePadding() {
+            let LEFT_PADDING = this.settings.get_int('left-padding');
+            let RIGHT_PADDING = this.settings.get_int('right-padding');
+            this.box.set_style("padding-left: " + LEFT_PADDING + "px;"
+                + "padding-right: " + RIGHT_PADDING + "px; ");
+        }
+
+        updateTrayPosition() {
+            const EXTENSION_PLACE = this.settings.get_string('extension-place');
+            const EXTENSION_INDEX = this.settings.get_int('extension-index');
+
+            if (this.container.get_parent())
+                this.container.get_parent().remove_child(this.container);
+
+            if (EXTENSION_PLACE == "left") {
+                main.panel._leftBox.insert_child_at_index(this.container, EXTENSION_INDEX);
+            }
+            else if (EXTENSION_PLACE == "center") {
+                main.panel._centerBox.insert_child_at_index(this.container, EXTENSION_INDEX);
+            }
+            else if (EXTENSION_PLACE == "right") {
+                main.panel._rightBox.insert_child_at_index(this.container, EXTENSION_INDEX);
+            }
+        }
+
         updateTimerFunc() {
-            let nextContest = contests.nextContest;
-            log.info("running updateTimerFunc", nextContest);
+            let nextContest = contestManager.nextContest;
+            console.debug("running updateTimerFunc", nextContest);
 
             if (nextContest >= 0) {
-                this.timerFunc = contests.allContests[nextContest].secondsTill.bind(
-                    contests.allContests[nextContest]);
+                this.timerFunc = getTimer(contestManager.allContests[nextContest], contestManager.onChange.bind(contestManager), this.settings.get_int("notify-before"));
                 this.start();
             }
             else {
@@ -64,7 +104,7 @@ var ContestCountdownButton = GObject.registerClass(
             }
         }
 
-        update() {
+        updateMenu() {
             this.menu.removeAll();
             this.menu.addMenuItem(new NextContestElement());
             this.menu.addMenuItem(new popupMenu.PopupSeparatorMenuItem());
@@ -94,7 +134,7 @@ var ContestCountdownButton = GObject.registerClass(
                     timerText = `${dd}d  ${hh}h  ${mm}m`;
             }
 
-            this.buttonText.set_text(timerText);
+            this.label.set_text(timerText);
 
         }
 
@@ -118,8 +158,8 @@ var ContestCountdownButton = GObject.registerClass(
 
         destroy() {
             this.stop();
-            contests.destroy();
-            contests = null;
+            contestManager.destroy();
+            contestManager = null;
             this.settings = null;
             this.menu.removeAll();
             super.destroy();
@@ -187,11 +227,9 @@ var ContestDetails = GObject.registerClass(
             let mm = Math.floor((contest.duration % 3600) / 60);
 
             var details =
-                `\nPlatform\t\t:  ${contest.platform} ` +
-                `\nDate\t\t:  ${contest.date.toLocaleFormat(
-                    "%A %d %B %Y"
-                )} ` +
-                `\nTime\t\t:  ${contest.date.toLocaleFormat("%r")} ` +
+                `\nWebsite\t:  ${contest.website} ` +
+                `\nDate\t\t:  ${getDateString(contest.date)} ` +
+                `\nTime\t\t:  ${getTimeString(contest.date)} ` +
                 `\nDuration\t:  ${hh} hours ${mm} minutes`;
 
             var detailsLabel = new St.Label({
@@ -245,14 +283,14 @@ var NextContestElement = GObject.registerClass(
             });
 
             // automatically update when nextContest changes
-            contests.connect('update-next-contest', this.update.bind(this));
+            contestManager.connect('update-next-contest', this.update.bind(this));
             this.update();
         }
 
         update() {
-            let nextContest = contests.nextContest >= 0 ?
-                contests.allContests[contests.nextContest] : null;
-            log.info("updating next contest label");
+            let nextContest = contestManager.nextContest >= 0 ?
+                contestManager.allContests[contestManager.nextContest] : null;
+            console.debug("updating next contest label");
 
             if (this.contest != nextContest)
                 this.contest = nextContest
@@ -292,12 +330,12 @@ class AllContestsList extends popupMenu.PopupMenuSection {
 
         this.update();
         // automatically update on update-contests signal
-        contests.connect('update-contests', this.update.bind(this));
+        contestManager.connect('update-contests', this.update.bind(this));
     }
 
     update() {
         this.innerMenu.removeAll();
-        for (let contest of contests.allContests) {
+        for (let contest of contestManager.allContests) {
             this.innerMenu.addMenuItem(new contestElement(contest));
         }
     }
@@ -319,3 +357,5 @@ let AllContestHeading = GObject.registerClass(
         }
     }
 );
+
+export { ContestCountdownButton };

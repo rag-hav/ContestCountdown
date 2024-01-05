@@ -16,8 +16,32 @@
         <key name="show-seconds" type="b">
             <default>true</default>
         </key>
+        <key name="enable-notification" type="b">
+            <default>true</default>
+        </key>
         <key name="notify-before" type="i">
             <default>60</default>
+        </key>
+        <key name="enable-clist" type="b">
+            <default>false</default>
+        </key>
+        <key name="clist-username" type="s">
+            <default>'username'</default>
+        </key>
+        <key name="refresh-signal" type="b">
+            <default>true</default>
+        </key>
+        <key name="clist-token" type="s">
+            <default>'token'</default>
+        </key>
+        <key name="clist-websites-blacklist" type="s">
+            <default>''</default>
+        </key>
+        <key name="clist-websites-whitelist" type="s">
+            <default>'codeforces.com,codechef.com,atcoder.jp,leetcode.com'</default>
+        </key>
+        <key name="use-whitelisted-websites-only" type="b">
+            <default>true</default>
         </key>
     </schema>
 </schemalist>

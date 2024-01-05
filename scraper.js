@@ -1,85 +1,72 @@
-const { main } = imports.ui;
-// web
 const Soup = imports.gi.Soup;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Self = ExtensionUtils.getCurrentExtension();
-const { log } = Self.imports.logging;
+const { Contest } = Self.imports.contest;
+const { getCurrentTime } = Self.imports.utils;
 
-var Contest = class Contest {
-    constructor(url, name, platform, date, duration, participating = null, notified = false) {
-        this.url = url;
-        this.name = name;
-        this.platform = platform;
-        this.date = date;
-        this.duration = duration;
-        this.participating = participating;
-        this.notified = notified;
-        this.onChange = () => { }; // will be set by the managing Contests object
+let session = new Soup.Session();
+
+function getFromUrl(url) {
+    let message = Soup.Message.new("GET", url);
+    const bytes = session.send_and_read(message, null);
+
+    const { statusCode } = message;
+    const phrase = Soup.Status.get_phrase(statusCode);
+    if (statusCode !== Soup.Status.OK)
+        throw new Error(`Unexpected response: ${phrase}`);
+
+    const decoder = new TextDecoder();
+    return JSON.parse(decoder.decode(bytes.get_data()));
+}
+
+export function getClist(clistUsername, clistToken, useWhitelist, whitelist, blacklist) {
+    whitelist = whitelist.split(',').map(e => e.trim());
+    blacklist = blacklist.split(',').map(e => e.trim());
+
+    let result = [];
+    let response = getFromUrl(`https://clist.by/api/v4/contest/?start__gte=${encodeURIComponent(getCurrentTime())}&username=${clistUsername}&api_key=${clistToken}&format=json`)
+    for (let entry of response.objects) {
+        if (useWhitelist ? whitelist.includes(entry.host) : !blacklist.includes(entry.host))
+            result.push(new Contest(
+                entry.href,
+                entry.event,
+                entry.host,
+                new Date(entry.start),
+                entry.duration
+            ));
     }
-    secondsTill(notifyBefore = - 1) {
-        let res = Math.floor((this.date - new Date()) / 1000);
-        if (!this.notified && res <= notifyBefore) {
-            main.notify("Contest Countdown", this.name);
-            this.notified = true;
-            this.onChange();
+    return result;
+
+}
+export function getCodeforces() {
+    let result = [];
+    let response = getFromUrl("https://codeforces.com/api/contest.list?gym=false");
+    if (!response || response.status !== "OK") {
+        throw new Error("Failed to get codeforces data");
+    }
+
+    for (let entry of response.result) {
+        if (entry.phase === "BEFORE") {
+            result.push(new Contest(
+                entry.id,
+                entry.name,
+                "codeforces.com",
+                new Date(entry.startTimeSeconds * 1000),
+                entry.durationSeconds
+            ));
         }
-        else if (res <= 0)
-            this.onChange();
-        return res;
+    }
+    return result;
+}
+
+
+export function getClistHosts(clistUsername, clistToken) {
+    try {
+        let hosts = new Set(getClist(clistUsername, clistToken, false, "", "").map((contest) => contest.website));
+        return [...hosts].join(",");
+    }
+    catch (e) {
+        return `[ {e} ]`;
     }
 }
-
-let kontests = function(session) {
-    const KONTESTS_API_URL = "https://kontests.net/api/v1/all";
-    return new Promise((resolve, reject) => {
-        let message = Soup.Message.new("GET", KONTESTS_API_URL);
-        session.queue_message(message, (_, message) => {
-
-            let response = JSON.parse(message.response_body.data);
-            if (!response) {
-                reject();
-                return;
-            }
-
-            let result = [];
-            for (let entry of response)
-                if (entry.status == "BEFORE")
-                    result.push(new Contest(
-                        entry.url,
-                        entry.name,
-                        entry.site,
-                        new Date(entry.start_time),
-                        duration = entry.duration)
-                    );
-
-            log.info("kontests.net download succesful");
-            // log.info("codeforces processed response", JSON.stringify(result, null, 2)); 
-            resolve(result);
-        }
-        )
-    }).catch((e) => {
-        log.error("Failed to get kontests.net contests", e);
-        reject();
-    })
-
-}
-
-const allScrapers = [kontests];
-
-var DownloadContests = () => {
-    let session = new Soup.SessionAsync();
-    return Promise.allSettled(allScrapers.map(p => p(session))).then((results) => {
-        let value = [], status = true;
-        for (let result of results) {
-            if (result.status == "fulfilled") // append contest from each scraper
-                value.push(...result.value);
-            else
-                status = false;
-        }
-        // log.info("DownloadContests completed");
-        return { value, status };
-    }).catch(e => log.error("DownloadContests", e));
-}
-
-
