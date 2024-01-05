@@ -16,7 +16,7 @@ fi
 
 # clone from the repository
 echo "Cloning from repository..."
-git clone https://github.com/rag-hav/ContestCountdown --branch master --single-branch "$EXTENSION_DIR" || (printf "\nCouldn't clone repository\n" && exit 1)
+git clone https://github.com/rag-hav/ContestCountdown --branch gnome-44 --single-branch "$EXTENSION_DIR" || (printf "\nCouldn't clone repository\n" && exit 1)
 
 
 if (( GNOME_VERSION < 40 )); then

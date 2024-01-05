@@ -12,14 +12,14 @@ Gnome extension that shows a countdown to the next codeforces contest in the top
 ### Automatic
 
 Run 
-```curl https://raw.githubusercontent.com/rag-hav/ContestCountdown/master/install.sh | bash```
+```curl https://raw.githubusercontent.com/rag-hav/ContestCountdown/gnome-44/install.sh | bash```
 
 ### Manual
 * Remove old installation (if any)
     ```rm -rf ~/.local/share/gnome-shell/extensions/contestcountdown@raghav```
     
 * Download new code from github
-    ```git clone https://github.com/rag-hav/ContestCountdown.git --branch master --single-branch ~/.local/share/gnome-shell/extensions/contestcountdown@raghav/```
+    ```git clone https://github.com/rag-hav/ContestCountdown.git --branch gnome-44 --single-branch ~/.local/share/gnome-shell/extensions/contestcountdown@raghav/```
 
 * If your Gnome version is < 40 (you can check using `gnome-shell --version`)
     * Goto extension folder
