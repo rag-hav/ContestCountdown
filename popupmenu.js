@@ -1,10 +1,17 @@
-const { main, popupMenu, checkBox, panelMenu } = imports.ui;
-const { GLib, St, GObject, Clutter } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Self = ExtensionUtils.getCurrentExtension();
-const { ContestManager } = Self.imports.contestmanager;
-const { getDateString, getTimeString } = Self.imports.utils;
-const Util = imports.misc.util;
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
+
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+import * as main from 'resource:///org/gnome/shell/ui/main.js';
+import * as popupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as checkBox from 'resource:///org/gnome/shell/ui/checkBox.js';
+import * as panelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+
+import { ContestManager } from './contestmanager.js';
+import { getDateString, getTimeString } from './utils.js';
+
 
 let contestManager;
 

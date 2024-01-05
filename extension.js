@@ -1,11 +1,10 @@
-const { main } = imports.ui;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Self = ExtensionUtils.getCurrentExtension();
-const { ContestCountdownButton } = Self.imports.popupmenu;
+import { ContestCountdownButton } from './popupmenu.js';
+import * as main from 'resource:///org/gnome/shell/ui/main.js';
 
-function init() {}
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-function enable() {
+export default class ContestCountdown extends Extension {
+    enable() {
         console.debug("Starting");
         this._settings = this.getSettings()
         // let contests = new Contests();
@@ -18,11 +17,12 @@ function enable() {
             this._settings.get_int("extension-index"),
             this._settings.get_string("extension-place")
         );
-}
+    }
 
-function disable() {
+    disable() {
         console.debug("Stoping");
         this.ccMenu.destroy();
         this.ccMenu = null;
         this._settings = null;
+    }
 }

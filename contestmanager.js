@@ -1,10 +1,9 @@
-const { Gio, GLib, GObject } = imports.gi;
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Self = ExtensionUtils.getCurrentExtension();
-
-const { Contest } = Self.imports.contest;
-const { getClist, getCodeforces } = Self.imports.scraper;
+import { getClist, getCodeforces } from './scraper.js';
+import { Contest } from './contest.js';
 
 export var ContestManager = GObject.registerClass(
     {

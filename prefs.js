@@ -1,14 +1,13 @@
-const Gio = imports.gi.Gio;
-const Adw = imports.gi.Adw;
-const Gtk = imports.gi.Gtk;
+import Gio from 'gi://Gio';
+import Adw from 'gi://Adw';
+import Gtk from 'gi://Gtk';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Self = ExtensionUtils.getCurrentExtension();
-const { getClistHosts } = Self.imports.scraper;
+import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import { getClistHosts } from './scraper.js';
 
-function init(){}
 
-function fillPreferencesWindow(window) {
+export default class ContestCountdownPreferences extends ExtensionPreferences {
+    fillPreferencesWindow(window) {
         let settings = this.getSettings();
 
         //panel page:
@@ -62,6 +61,7 @@ function fillPreferencesWindow(window) {
         addEntry(settings, group, 'clist-websites-whitelist', 'Allow list', 'Separate entries with commas');
         addSwitch(settings, group, 'use-whitelisted-websites-only', 'Ignore all websites except allowed ones');
 
+    }
 }
 
 

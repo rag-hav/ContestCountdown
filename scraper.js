@@ -1,9 +1,7 @@
-const Soup = imports.gi.Soup;
+import Soup from 'gi://Soup';
+import { Contest } from './contest.js';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Self = ExtensionUtils.getCurrentExtension();
-const { Contest } = Self.imports.contest;
-const { getCurrentTime } = Self.imports.utils;
+import { getCurrentTime } from './utils.js';
 
 let session = new Soup.Session();
 
